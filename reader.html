@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QRコードリーダー</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+    <style>
+        #qr-reader {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container my-5">
+        <h1 class="text-center">QRコードリーダー</h1>
+        <div id="qr-reader" class="my-4"></div>
+
+        <!-- QRコード結果を表示するモーダル -->
+        <div class="modal fade" id="resultModal" tabindex="-1" aria-labelledby="resultModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="resultModalLabel">読み取り結果</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p id="scannedId">ID: </p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // QRコードリーダーの初期化
+        const qrReader = new Html5Qrcode("qr-reader");
+
+        function onScanSuccess(decodedText) {
+            // IDを表示
+            document.getElementById('scannedId').innerText = "ID: " + decodedText;
+
+            // モーダルを表示
+            const resultModal = new bootstrap.Modal(document.getElementById('resultModal'));
+            resultModal.show();
+
+            // サーバーにPOSTリクエストを送信
+            fetch("https://www/a?form_id=" + decodedText, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ id: decodedText })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log("サーバーからの応答:", data);
+                })
+                .catch(error => {
+                    console.error("エラーが発生しました:", error);
+                });
+        }
+
+        function onScanFailure(error) {
+            // 読み取り失敗時の処理（オプション）
+            console.warn("読み取り失敗:", error);
+        }
+
+        // QRコード読み取りの設定
+        qrReader.start(
+            { facingMode: "environment" }, // 背面カメラを使用
+            {
+                fps: 10,
+                qrbox: { width: 250, height: 250 }
+            },
+            onScanSuccess,
+            onScanFailure
+        ).catch(error => {
+            console.error("QRコードリーダーの初期化に失敗:", error);
+        });
+    </script>
+</body>
+</html>
